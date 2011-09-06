@@ -44,7 +44,7 @@ Adding Embed Page
 
 Add like the following form to embed page.
 
-.. image:: images/sep-0001-1.png
+.. image:: images/sep-0001-001.png
 
 Ploting Gadget
 --------------
