@@ -1,0 +1,253 @@
+============
+Notification
+============
+
+Abstract
+========
+
+Social site needs some ways for notification of something to users.
+
+This document defines a spec of general notification system in Societo.
+
+Some other systems (includes non web application) prepare such a system. This spec are inspired the following implementations:
+
+* Ubuntu Notify OSD
+* Growl
+* Facebook
+* Twitter
+* GitHub
+* Notification Center in iOS5
+* Notification Manager in Android OS
+
+Features
+========
+
+This document defines the following features:
+
+* Registering notification
+* Displaying notification
+* Selecting notification method
+* Add notification method from plugin
+
+Registering Notification
+------------------------
+
+Applications, which use notification system, add an entity item of notification with its namespace and some parameters.
+
+Displaying Notification
+-----------------------
+
+Notification Manager
+````````````````````
+
+User can view his all notifications from the notification manager page gadget.
+
+The gadget shows a list of notifications. An entry of notification is clickable (on clicking, the notifier application may do any actions).
+
+All notifications have namespace information. This means that the gadget can filter notifications by using that information.
+
+Notification Count
+``````````````````
+
+A number of notifications are provided in all pages. Concretely, you can get notification count from session data.
+
+The count cache will be updated in the following timings:
+
+* Logged in
+* User shows the notification manager
+* User triggers the specific notification action
+
+And an available time of the cache age is an hour.
+
+Notification Method
+```````````````````
+
+Societo supports many notification methods that are come from plugins. So Societo doesn't define a concrete implementation of per notification method.
+
+Applications can choose notification method what it wants. End user can also choose it when a notifier application allows user configured notifications.
+
+Action of Notification
+``````````````````````
+
+Notification can have actions that are triggered by user action (e.g. click a notification entry).
+
+Selecting Notification Method
+-----------------------------
+
+User can configure and select notification method from the notification config gadget. The gadget displays configurations for available gadgets.
+
+And, administrator can add restrict to user configurable notification method from backend.
+
+Consideration of Data
+=====================
+
+Notification
+------------
+
+* namespace
+* name
+* origin (member.id, optional)
+* destination (member.id)
+* method (array)
+* parameters (array)
+
+NotificationConfig
+------------------
+
+* member (member.id)
+* namespace
+* name
+* method (array)
+* parameters (array)
+
+Consideration of Event
+======================
+
+On Create Notification Entry
+----------------------------
+
+The event is dispatched when Societo notifies items by using every available notification methods.
+
+The following parameters are available:
+
+entity (read-only)
+    An entity of Notification.
+notification_method (read-only)
+    A current notification method name.
+body
+    In default, a value of this property is an empty string. An application can set a body of this event. A value of the property is used by notification methods.
+
+On Display Summary of Notification
+----------------------------------
+
+The event is dispatched when Societo renders summary of notification.
+
+The following parameters are available:
+
+entity (read-only)
+    An entity of Notification.
+summary
+    Societo renders this property as summary of notification with HTML escape. A default value is an empty string.
+
+On Display Notification
+-----------------------
+
+The event is dispatched when Societo renders notification.
+
+The following parameters are available:
+
+entity (read-only)
+    An entity of Notification.
+body
+    Societo renders this property as body of notification without HTML escapes. A default value is an empty string.
+
+On Trigger Notification Action
+------------------------------
+
+The event is dispatched when use triggers notification action.
+
+The following parameters are available:
+
+entity (read-only)
+    An entity of Notification.
+response
+    A response of notification action. Default is NULL. If a value is sat, Societo renders this value as response.
+
+Consideration of Config
+=======================
+
+Add Available Notification from Application
+-------------------------------------------
+
+Register service in DIC with "societo.notification" tag.
+
+That service must has the following methods:
+
+* getNotificationNamespace()
+* getNotificationName()
+* getNotificationCaption()
+
+My thought of best practice is the service also has ability as the "event_subscriber".
+
+Add Notification Method from Application
+----------------------------------------
+
+Register service in DIC with "societo.notification.method" tag.
+
+The service must has the following methods:
+
+* getCaption()
+* notify()
+
+Standard Collection of Notification Methods
+===========================================
+
+Email
+-----
+
+Send E-mail from the site.
+
+A value of subject header will be based on a summary of the notification.
+
+A value of the body part will be based on a body of the notification.
+
+A default sender e-mail address is site_config.admin_email. If the "sender_email_address" option is in notification, this method uses this value as sender email address.
+
+A default receiver e-mail address is member_config.email.
+
+A value of sender e-mail address or receiver e-mail address is empty, this method doesn't send e-mail.
+
+HTML5 Web Notification
+----------------------
+
+Show notification by using HTML5 Web Notification. See http://dev.w3.org/2006/webapi/WebNotifications/publish/
+
+A value of "title" is a summary of the notification.
+
+A value of "body" is a body of the notification.
+
+A default value of "iconUrl" is URL to favicon.ico. If the "icon_url" option is in notification, the method uses this value as iconUrl.
+
+HTTP Request
+------------
+
+POST a JSON data to the specified URL.
+
+A template of the JSON data is the following::
+
+    {
+        "namespace" : "",
+        "name" : "",
+        "summary" : "",
+        "body" : "",
+        "options": {}
+    }
+
+Fallback
+========
+
+Notify
+------
+
+Do nothing if the specified notifier application is undefined.
+
+Do nothing if the specified notification method is undefined.
+
+Display
+-------
+
+Do nothing if the specified notifier application is undefined.
+
+Out of Scopes
+=============
+
+Approval Feature
+    Notification provides a path to approval but doesn’t understand its concrete implementation.
+    You can do any action on notifying so you just need to render HTML for your approval.
+
+Bundle
+======
+
+Implementation of notification itself is in new SocietoNotificationBundle.
+
+And some bundles will depend on this bundle but the dependencies should be "optional".
